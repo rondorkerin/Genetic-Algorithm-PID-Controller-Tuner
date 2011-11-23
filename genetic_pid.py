@@ -10,11 +10,12 @@ import csv
 MAX_TIMESTEPS = 150
 POPULATION_SIZE = 100
 MUTATION_PROBABILITY = .1
-CROSSOVER_RATE = .7
+CROSSOVER_RATE = .9
 MAX_RUNS = 100
 FITNESS_THRESHOLD = .00001
-MAX_GAIN_VALUE = 1
+MAX_GAIN_VALUE = .1
 LINE_SMOOTHNESS = .1
+#DYNAMIC_FACTOR = .01
 
 #http://www.waset.org/journals/waset/v56/v56-89.pdf
 # Premature convergence problem.
@@ -84,8 +85,8 @@ takes in a list of distances, finds the sum of their squares and returns the inv
 def fitness(distance_list):
 	sum = 0
 	for i in range(len(distance_list)):
-		sum = sum + math.fabs(distance_list[i])
-	return 1 /  sum
+		sum = sum + distance_list[i]**2
+	return 1 /  math.sqrt(sum)
 		
 """
 Run simulation for a specific chromosome c.
@@ -108,6 +109,9 @@ def run_simulation_for_chromosome(map, population, chromosome):
 		current_summation = current_summation + current_distance
 		
 		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
+		
+		#simulate dynamic environment
+		#new_velocity = new_velocity * (1 + random.random()*DYNAMIC_FACTOR)
 		#x = x + dx/dt * dt (dt = 1)
 		
 		current_position = current_position + new_velocity
@@ -150,6 +154,9 @@ def run_simulation_for_best(map, population, chromosome, runNumber, fitness_fact
 		
 		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
 		# find the v = (x2-x1)*kp and x = x + dx/dt * dt (dt = 1)
+	
+		#simulate dynamic environment
+		#new_velocity = new_velocity * (1 + random.random()*DYNAMIC_FACTOR)
 	
 		current_position = current_position + new_velocity
 			
@@ -227,22 +234,26 @@ def crossover(population, parents):
 """
 def mutation(chromosome):
 	random.seed()
+	rand_number = random.random()
 	
-	if random.random() < MUTATION_PROBABILITY / 3:
-		#very small real valued mutation
-		chromosome.kp = chromosome.kp + random.random()/MAX_GAIN_VALUE 
-		if chromosome.kp < 0:
-			chromosome.kp = random.random() * MAX_GAIN_VALUE
-			
-	elif random.random() < MUTATION_PROBABILITY * 2/3:
-		chromosome.ki = chromosome.ki + random.random()/MAX_GAIN_VALUE
-		if chromosome.ki < 0:
-			chromosome.ki = random.random() * MAX_GAIN_VALUE
-			
-	elif random.random() < MUTATION_PROBABILITY:
-		chromosome.kd = chromosome.kd + random.random()/MAX_GAIN_VALUE
-		if chromosome.kd < 0:
-			chromosome.kd = random.random() * MAX_GAIN_VALUE		
+	#very small real valued mutation
+	random_mutation = (random.random()-.5)/MAX_GAIN_VALUE
+	
+	if rand_number < MUTATION_PROBABILITY / 3:
+		if chromosome.kp + random_mutation < 0:
+			chromosome.kp = chromosome.kp + math.fabs(random_mutation)
+		else:
+			chromosome.kp = chromosome.kp + random_mutation
+	elif rand_number < MUTATION_PROBABILITY * 2/3:
+		if chromosome.ki + random_mutation < 0:
+			chromosome.ki = chromosome.ki + math.fabs(random_mutation)
+		else:
+			chromosome.ki = chromosome.ki + random_mutation	
+	elif rand_number < MUTATION_PROBABILITY:
+		if chromosome.kd + random_mutation < 0:
+			chromosome.kd = chromosome.kd + math.fabs(random_mutation)
+		else:
+			chromosome.kd = chromosome.kd + random_mutation
 			
 	return chromosome
 	
