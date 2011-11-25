@@ -13,9 +13,8 @@ MUTATION_PROBABILITY = .1
 CROSSOVER_RATE = .9
 MAX_RUNS = 100
 FITNESS_THRESHOLD = .00001
-MAX_GAIN_VALUE = .1
+MAX_GAIN_VALUE = 3
 LINE_SMOOTHNESS = .1
-#DYNAMIC_FACTOR = .01
 
 #http://www.waset.org/journals/waset/v56/v56-89.pdf
 # Premature convergence problem.
@@ -137,22 +136,11 @@ def run_simulation_for_champion(map, population, chromosome, runNumber, fitness_
 	current_summation = 0
 	current_distance = 0
 	
-	import numpy as np
 	import matplotlib.pyplot as plt
 	
 	plt.figure()
 	plt.plot()
 	plt.title("Best run in run number " + str(runNumber))
-	
-	#csvWriter = csv.writer(open('best_run' + str(runNumber) + '.csv', 'wb'), delimiter=',',
-	#						quotechar='|', quoting=csv.QUOTE_MINIMAL)
-						
-	#csvWriter.writerow(['fitness ', fitness_factor])
-	#csvWriter.writerow(['kp', population[chromosome].kp])
-	#csvWriter.writerow(['kd', population[chromosome].kd])
-	#csvWriter.writerow(['ki', population[chromosome].ki])
-	#csvWriter.writerow(['position: ', 'line position'])		
-
 	
 	positions = []
 					
@@ -162,15 +150,11 @@ def run_simulation_for_champion(map, population, chromosome, runNumber, fitness_
 		#for integral controller
 		current_summation = current_summation + current_distance
 		
-		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
 		# find the v = (x2-x1)*kp and x = x + dx/dt * dt (dt = 1)
-	
-		#simulate dynamic environment
-		#new_velocity = new_velocity * (1 + random.random()*DYNAMIC_FACTOR)
+		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
 	
 		current_position = current_position + new_velocity
 		
-		#csvWriter.writerow([current_position, map[time]])
 		positions.append(time)
 		positions[time] = current_position
 		
@@ -377,7 +361,7 @@ plt.title("Fitness Values Over Time")
 
 plt.plot(range(MAX_RUNS), max_values, label = r"Max Value")
 plt.plot(range(MAX_RUNS), avg_values, label = r"Average Value")
-plt.legend(loc='bottom right')
+plt.legend(loc='lower right')
 plt.xlabel("Run")
 plt.ylabel("Value")
 plt.show()		
@@ -390,7 +374,7 @@ plt.title("Champion Gain Values Per Run")
 plt.plot(range(MAX_RUNS), kp_values, label = r"Kp")
 plt.plot(range(MAX_RUNS), kd_values, label = r"Kd")
 plt.plot(range(MAX_RUNS), ki_values, label = r"Ki")
-plt.legend(loc='lower center')
+plt.legend(loc='center right')
 plt.xlabel("Run")
 plt.ylabel("Value")
 plt.show()		
