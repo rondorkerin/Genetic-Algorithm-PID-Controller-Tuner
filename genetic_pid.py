@@ -2,24 +2,39 @@ import random
 import math
 import listtools
 import csv
+import matplotlib.pyplot as plt
+import os
 
-#
-# Genetic algorithm for tuning a 1 dimensional pid controller
-#
+"""
+Genetic algorithm for tuning a 1 dimensional pid controller
+"""
 
-MAX_TIMESTEPS = 150
+# Genetic algorithm parameters
+
 POPULATION_SIZE = 100
 MUTATION_PROBABILITY = .1
 CROSSOVER_RATE = .9
 MAX_RUNS = 100
-FITNESS_THRESHOLD = .00001
-MAX_GAIN_VALUE = 3
+
+# Simulation Parameters
+MAX_TIMESTEPS = 150
 LINE_SMOOTHNESS = .1
+MAX_GAIN_VALUE = 3
+
+# Control Variables
+# when set to 1, we create a new map this run. When set to 0, loads a new map
+NEW_MAP = 0
+# The number of runs we wait between showing a screenshot of the champion's run
+RUNS_PER_SCREENSHOT = 10
 
 #http://www.waset.org/journals/waset/v56/v56-89.pdf
 # Premature convergence problem.
 #
 
+"""
+The chromosome is the set of values we wish to optimize with our algorithm. In this case,
+it is the three gain values.
+"""
 class Chromosome:
 	def __init__(self, kp, kd, ki):
 		self.kp = kp
@@ -27,7 +42,7 @@ class Chromosome:
 		self.ki = ki
 	 
 """
-
+Creates a map based on a line smoothness. The smoother the line, the less jagged it will become
 """
 def create_map():
 	random.seed()
@@ -39,24 +54,25 @@ def create_map():
 							quotechar='|', quoting=csv.QUOTE_MINIMAL)
 	
 	for time in range(MAX_TIMESTEPS):
-		map.append(time)
 		# the smaller LINE_SMOOTHNESS, the more smooth the line is
 		if random.random() < LINE_SMOOTHNESS:
-			map[time] = current_map_value + (random.random() - .5)*MAX_GAIN_VALUE/1000
+			map.append(current_map_value + (random.random() - .5)*MAX_GAIN_VALUE/1000)
 		else:
-			map[time] = current_map_value
+			map.append(current_map_value)
 		current_map_value = map[time]
 		csvWriter.writerow([current_map_value])
 
 	return map
 	
+
+"""
+Loads the local file map.csv into a line.
+"""
 def load_map():
-# http://love-python.blogspot.com/2008/02/read-csv-file-in-python.html
 	list_map = list(csv.reader(open("map.csv", "rb")))
 	map = []
 	for time in range(len(list_map)):
-		map.append(time)
-		map[time] = float(list_map[time][0])
+		map.append(float(list_map[time][0]))
 	return map
 	
 		
@@ -71,8 +87,7 @@ def generate_initial_population():
 	population = []
 	for chromosome in range(POPULATION_SIZE):
 		# create a random chromosome with a random gain value
-		population.append(chromosome)
-		population[chromosome] = Chromosome(random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE)
+		population.append(Chromosome(random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE))
 	return population
 		
 """ 
@@ -101,21 +116,16 @@ def run_simulation_for_chromosome(map, population, chromosome):
 	current_distance = 0
 							
 	for time in range(MAX_TIMESTEPS):
-		distance_list.append(time)
 		current_distance = map[time] - current_position
 	
 		#for integral controller
 		current_summation = current_summation + current_distance
 		
-		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
-		
-		#simulate dynamic environment
-		#new_velocity = new_velocity * (1 + random.random()*DYNAMIC_FACTOR)
 		#x = x + dx/dt * dt (dt = 1)
-		
+		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
 		current_position = current_position + new_velocity
 		
-		distance_list[time] = current_distance
+		distance_list.append(current_distance)
 			
 		# for the derivative
 		last_distance = current_distance
@@ -130,46 +140,42 @@ Returns the fitness function value of the simulation
 """
 def run_simulation_for_champion(map, population, chromosome, runNumber, fitness_factor):
 	
-	distance_list = []
 	current_position = 0
 	last_distance = 0
 	current_summation = 0
 	current_distance = 0
 	
-	import matplotlib.pyplot as plt
-	
-	plt.figure()
-	plt.plot()
-	plt.title("Best run in run number " + str(runNumber))
-	
-	positions = []
+	distance_list = [0]*MAX_TIMESTEPS
+	positions = [0]*MAX_TIMESTEPS
 					
 	for time in range(MAX_TIMESTEPS):
-		distance_list.append(time)
 		current_distance = map[time] - current_position
-		#for integral controller
+		
+		# Keep track of summation for integral calculation
 		current_summation = current_summation + current_distance
 		
 		# find the v = (x2-x1)*kp and x = x + dx/dt * dt (dt = 1)
 		new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
-	
 		current_position = current_position + new_velocity
 		
-		positions.append(time)
+		# update 
 		positions[time] = current_position
-		
 		distance_list[time] = current_distance
 			
-		# for the derivative
+		# Keep track of the last distance for derivative calculations
 		last_distance = current_distance
 		
-	# plot positions of champion versus time.
+	# plot positions of champion versus time.	
+	plt.figure()
+	plt.plot()
+	plt.title("Best run in run number " + str(runNumber))
 	plt.plot(range(MAX_TIMESTEPS), positions, label = r"Robot positions")
 	plt.plot(range(MAX_TIMESTEPS), map, label = r"Line positions")
 	plt.legend(loc='upper right')
 	plt.xlabel("Time")
 	plt.ylabel("Position")
-	plt.show()
+	plt.savefig("results/bestrun_" + str(runNumber) + ".png", format="png")
+	#plt.show()
 	
 	return fitness(distance_list)
 	
@@ -187,11 +193,13 @@ def run_simulation(map, population):
 
 """
 Pick two parents according to probability represented by normalized fitness values
-3a[Selection] Select two parent chromosomes from a population according to their fitness (the better fitness, the bigger chance to be selected)
+3a[Selection] Select two parent chromosomes from a population according to their fitness
+Better fitness values increase the chance of being selected.
 """
 def selection(fitness_values):
 	# normalize the list so we have probabilities to pick parents
 	fitness_values = listtools.normListSumTo(fitness_values, 1)
+	# a list of parent indices.
 	parents = []
 	random.seed()
 	parent1_probability = random.random()
@@ -220,7 +228,7 @@ def crossover(population, parents):
 	if random.random() > CROSSOVER_RATE:
 		return population[parents[0]]
 	else:
-		# random combination crossover
+		# One point crossover
 		number = random.random()
 		if number < .25:
 			return Chromosome(population[parents[1]].kp,population[parents[1]].kd, population[parents[1]].ki)
@@ -264,8 +272,10 @@ def mutation(chromosome):
 """
 def generate_new_population(fitness_values, previous_population):
 	new_population = []
+	
+	# for each child of our new population
 	for i in range(POPULATION_SIZE-1):
-		new_population.append(i)
+		
 		# selection
 		parents = selection(fitness_values)
 				
@@ -274,15 +284,16 @@ def generate_new_population(fitness_values, previous_population):
 
 		# mutation
 		chromosome = mutation(chromosome)
-		new_population[i] = chromosome
+		
+		# accept
+		new_population.append(chromosome)
 	
 	
 	"""
 	Perform hybrid elitist selection. Carry the best chromosome over to the new population, unmutated.
 	"""
 	chromosome = population[listtools.max_index_in_list(fitness_values)]
-	new_population.append(POPULATION_SIZE-1)
-	new_population[POPULATION_SIZE-1] = chromosome
+	new_population.append(chromosome)
 	
 	return new_population
 	
@@ -300,17 +311,19 @@ def generate_new_population(fitness_values, previous_population):
 	5 [Test] If the end condition is satisfied, stop, and return the best solution in current population
 	6 [Loop] Go to step 2
 """
-	
-#################################################################################################################################################
-#  	
-#  	NOTE: Fitness_values is indexed by chromosome number, so if we attempt to sort it, 
-#   we will pick the wrong index when generating a new population. Which would be bad.
-#
-#################################################################################################################################################
 
-# create map or load map based on debug mode
-#map = create_map()
-map = load_map()
+# create map or load map based on mode
+if NEW_MAP == 1:
+	map = create_map()
+else:
+	map = load_map()
+
+# make a directory to store results
+try:
+	os.mkdir("results")
+except OSError:
+	pass
+	
 population = generate_initial_population()
 fitness_values = run_simulation(map, population)
 
@@ -330,31 +343,26 @@ for i in range(MAX_RUNS):
 	
 	# add the champion chromosome to a list of champions for plotting
 	index_of_champion = listtools.max_index_in_list(fitness_values)
-	kp_values.append(i)
-	kp_values[i] = population[index_of_champion].kp
-	kd_values.append(i)
-	kd_values[i] = population[index_of_champion].kd
-	ki_values.append(i)
-	ki_values[i] = population[index_of_champion].ki
+	kp_values.append(population[index_of_champion].kp)
+	kd_values.append(population[index_of_champion].kd)
+	ki_values.append(population[index_of_champion].ki)
 	
 
 	# add the max/average values to lists for plotting
-	max_values.append(i)
-	avg_values.append(i)
-	max_values[i] = listtools.max_value_in_list(fitness_values)
-	avg_values[i] = listtools.avgList(fitness_values)
+	max_values.append(listtools.max_value_in_list(fitness_values))
+	avg_values.append(listtools.avgList(fitness_values))
 	
 	
-	# every 10 runs, do a plot of the champion chromosome
-	if i % 10 == 0:
+	# every RUNS_PER_SCREENSHOT runs, do a plot of the champion chromosome
+	if i % RUNS_PER_SCREENSHOT == 0:
 		# run the simulation for the first selected parent
 		run_simulation_for_champion(map, population, index_of_champion, i, listtools.max_value_in_list(fitness_values))
 
 	print "Run " + str(i) + ": max value " + str(max_values[i]) + ", avg value " + str(avg_values[i])
 
-import matplotlib.pyplot as plt
 	
 # plot fitness results of each run	
+	
 plt.figure()
 plt.plot()
 plt.title("Fitness Values Over Time")
@@ -364,7 +372,7 @@ plt.plot(range(MAX_RUNS), avg_values, label = r"Average Value")
 plt.legend(loc='lower right')
 plt.xlabel("Run")
 plt.ylabel("Value")
-plt.show()		
+plt.savefig("results/fitness_values_over_time.png", format="png")	
 
 # plot values of parameters for each run
 plt.figure()
@@ -377,4 +385,4 @@ plt.plot(range(MAX_RUNS), ki_values, label = r"Ki")
 plt.legend(loc='center right')
 plt.xlabel("Run")
 plt.ylabel("Value")
-plt.show()		
+plt.savefig("results/champion_gain_values_per_run.png", format="png")

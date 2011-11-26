@@ -1,4 +1,6 @@
-## {{{ http://code.activestate.com/recipes/278258/ (r1)
+# Reference:
+# http://code.activestate.com/recipes/278258/ 
+
 #========================================================================
 def sumList(L):
     return reduce(lambda x,y:x+y, L)
