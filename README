@@ -40,4 +40,5 @@ Dependencies
 ------------
 
 - Python 2.7
-- Numpy 1.5 - Matplotlib (pip install matplotlib)
+- Numpy 1.5
+- Matplotlib (pip install matplotlib)
