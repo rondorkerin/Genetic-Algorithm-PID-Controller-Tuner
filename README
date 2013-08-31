@@ -4,22 +4,30 @@ Genetic Algorithm PID Controller Tuner
 Overview
 --------
 
-Uses a genetic algorithm to tune gain values for an abstracted one-dimensional PID controller. Please refer to the screencap for a quick explanation and example of the program's functionality. This program was created as a final project for introduction to robotics at University Of Central Florida
+Genetic-algorithm-pid-controller-tuner is an example of using a genetic algorithm to tune a PID controller.
 
-How To Use
-----------
+A PID controller is any controller that uses a combination of integral, proportional, and derivative parameters (I, P, D) to
+follow some target value. We integrate, derive, and multiply the distance from our target by certain constants. Call them (a, b, c)
 
-- If you wish to create a new map file, edit the control variable NEW_MAP = 1
-- For subsequent runs of the program, if you wish to use an existing map, set NEW_MAP = 0
-- The map will be located in the same directory as the project, named map.csv
-- In a terminal, type python genetic_pid.py
-- This will run the simulation.
-- Results will be output to the "results" directory.
-- Set the control variable RUNS_PER_SCREENSHOT to toggle how many runs you show the champion chromosome's run.
-- Results consist of the following:
-	- one PNG value every RUNS_PER_SCREENSHOT runs
-	- fitness_values_over_time.png, which plots the maximum and average fitness over time
-	- champion_gain_values_over_time.png, which plots the evolution of the champion gain values over time
+So our "velocity towards the target value" is the function f(x) = a*I(x) + b*P(x) + c*D(x) where "x" is the current distance
+from the target location.
+
+In our example, we have a robot following a theoretical line. The line randomly walks about the origin "0" at each timestep. We use
+a genetic algorithm to find how fit our robot is to follow the line.
+
+The application outputs some pretty cool graphs that show how the values of (a, b, c) evolve over time
+
+News
+---------------------------
+08/31/2013 : I'm currently overhauling the project and moving it to a new architecture. The application will consist of four main modules:
+    - Algorithm, which will house the genetic algorithm logic
+    - Map, which creates or loads a map over which the robot runs
+    - Chromosome, which defines the chromosome (a, b, c), which are also known as (Ki, Kp, Kd)
+    - Simulation, which contains methods for running the simulation.
+We will also be storing configuration parameters in the config.py file in the main directory.
+
+Stay tuned!
+
 
 Possible Future Improvements
 ----------------------------
