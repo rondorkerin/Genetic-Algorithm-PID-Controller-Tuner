@@ -1,9 +1,9 @@
 import random
 import math
-import csv
 import matplotlib.pyplot as plt
 import os
 from lib.chromosome import Chromosome
+from lib.map import Map
 from lib import listtools
 from lib.genetic_pid import *
 
@@ -32,40 +32,6 @@ RUNS_PER_SCREENSHOT = 10
 #http://www.waset.org/journals/waset/v56/v56-89.pdf
 # Premature convergence problem.
 #
-
-"""
-Creates a map based on a line smoothness. The smoother the line, the less jagged it will become
-"""
-def create_map():
-    random.seed()
-    map = []
-
-    current_map_value = 0
-
-    csvWriter = csv.writer(open('map.csv', 'wb'), delimiter=',',
-                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
-    for time in range(MAX_TIMESTEPS):
-        # the smaller LINE_SMOOTHNESS, the more smooth the line is
-        if random.random() < LINE_SMOOTHNESS:
-            map.append(current_map_value + (random.random() - .5)*MAX_GAIN_VALUE/1000)
-        else:
-            map.append(current_map_value)
-        current_map_value = map[time]
-        csvWriter.writerow([current_map_value])
-
-    return map
-
-
-"""
-Loads the local file map.csv into a line.
-"""
-def load_map():
-    list_map = list(csv.reader(open("map.csv", "rb")))
-    map = []
-    for time in range(len(list_map)):
-        map.append(float(list_map[time]))
-    return map
 
 """
     Main
