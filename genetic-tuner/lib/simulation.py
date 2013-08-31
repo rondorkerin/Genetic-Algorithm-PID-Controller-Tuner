@@ -1,24 +1,93 @@
-def generate_initial_population():
-    """
+from map import Map
+from algorithm import GeneticAlgorithm
+
+"""
+    Main
+
     1 [Start] Generate random population of n chromosomes (suitable solutions for the problem)
-    Creates a random genome
+    2 [Fitness] Evaluate the fitness f(x) of each chromosome x in the population
+    3 [New population] Create a new population by repeating following steps until the new population is complete
+        3a[Selection] Select two parent chromosomes from a population according to their fitness (the better fitness, the bigger chance to be selected)
+        3b[Crossover] With a crossover probability cross over the parents to form a new offspring (children). If no crossover was performed, offspring is an exact copy
+        3c[Mutation] With a mutation probability mutate new offspring at each locus (position in chromosome).
+        3d[Accepting] Place new offspring in a new population
+    4 [Replace] Use new generated population for a further run of algorithm
+    5 [Test] If the end condition is satisfied, stop, and return the best solution in current population
+    6 [Loop] Go to step 2
+"""
+class Simulation:
+    def __init__(self, config):
+        self.config = config
+        self.map = Map(config)
+        self.algorithm = GeneticAlgorithm()
+        self.generate_initial_population()
+
+    def generate_initial_population(self):
+        """
+        Generate random population of n chromosomes (suitable solutions for the problem)
+        Creates a random genome
+        """
+        random.seed()
+        self.population = []
+        for chromosome in range(config['population_size']):
+            # create a random chromosome with a random gain value
+            self.population.append(Chromosome(random.random() * config['max_gain_value'], random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE))
+
     """
-    random.seed()
-    population = []
-    for chromosome in range(POPULATION_SIZE):
-        # create a random chromosome with a random gain value
-        population.append(Chromosome(random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE))
-    return population
+    3 [New population] Create a new population by repeating following steps until the new population is complete
+    """
+    def generate_new_population(self):
+        new_population = []
+        for i in range(self.config['population_size']-1):
+            # selection
+            parents = self.algorithm.selection(self.fitness_values)
 
-"""
-2 [Fitness] Evaluate the fitness f(x) of each chromosome x in the population
-returns the fitness value according to the fitness function
+            # crossover
+            chromosome = self.algorithm.crossover(self.population, parents)
 
-takes in a list of distances, finds the sum of their squares and returns the inverse of it.
-"""
-def fitness(distance_list):
-    sum = 0
-    for i in range(len(distance_list)):
-        sum = sum + distance_list[i]**2
-    return 1 /  math.sqrt(sum)
+            # mutation
+            chromosome = self.algorithm.mutation(chromosome)
+            new_population.append(chromosome)
+
+        return new_population
+
+    def run_one_generation(self):
+        self.fitness_values = []
+        for chromosome in range(config['population_size']):
+            self.fitness_values.append(chromosome)
+            self.fitness_values[chromosome] = run_simulation_for_chromosome(map, population, chromosome)
+
+
+    def run_simulation_for_chromosome(map, population, chromosome):
+        """
+        Run simulation for a specific chromosome c.
+
+        Returns the fitness function value of the simulation
+        """
+
+        distance_list = []
+        current_position = 0
+        last_distance = 0
+        current_summation = 0
+        current_distance = 0
+
+        for time in range(MAX_TIMESTEPS):
+            distance_list.append(time)
+            current_distance = map[time] - current_position
+
+            #for integral controller
+            current_summation = current_summation + current_distance
+
+            new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
+            #x = x + dx/dt * dt (dt = 1)
+
+            current_position = current_position + new_velocity
+
+            distance_list[time] = current_distance
+
+            # for the derivative
+            last_distance = current_distance
+
+        return self.algorithm.fitness(distance_list)
+
 

@@ -1,27 +1,29 @@
 import random
 import csv
+import os
 """
 Map is a list of float values that randomly walk around the center point (0)
 There is one point for each timestep in the simulation
 """
 class Map:
-    def __init__(self, fileName, maxTimesteps, lineSmoothness, isNew):
-        if isNew:
-            self.createNew(fileName, maxTimesteps, lineSmoothness)
+    def __init__(self, config):
+        filePath = os.path.join(config['data_directory'], config['map_filename'])
+        if config['new_map']:
+            self.createNew(filePath, config['max_timesteps'], config['line_smoothness'])
         else:
-            self.load(fileName)
+            self.load(filePath)
 
     """
     Creates a map based on a line smoothness. The smoother the line, the less jagged it will become
     Smoothness varies between [0 and 1] with 0 being the smoothest
     """
-    def createNew(self, fileName, maxTimesteps, lineSmoothness):
+    def createNew(self, filePath, maxTimesteps, lineSmoothness):
         random.seed()
         map = []
 
         current_map_value = 0
 
-        csvWriter = csv.writer(open(fileName, 'wb'), delimiter=',',
+        csvWriter = csv.writer(open(filePath, 'wb'), delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
         for time in range(maxTimesteps):
@@ -38,8 +40,8 @@ class Map:
     """
     Loads the local file map.csv into a line.
     """
-    def load(self, fileName):
-        list_map = list(csv.reader(open(fileName, "rb")))
+    def load(self, filePath):
+        list_map = list(csv.reader(open(filePath, "rb")))
         map = []
         for time in range(len(list_map)):
             map.append(float(list_map[time]))

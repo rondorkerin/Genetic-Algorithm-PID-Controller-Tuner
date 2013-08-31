@@ -1,64 +1,17 @@
 import random
 import math
+import config
 import matplotlib.pyplot as plt
 import os
-from lib.chromosome import Chromosome
-from lib.map import Map
-from lib import listtools
-from lib.genetic_pid import *
+from lib.simulation import Simulation
 
-"""
-Genetic algorithm for tuning a 1 dimensional pid controller
-"""
+if not os.path.exists(config['data_directory']):
+    os.makedirs(config['data_directory'])
 
-# Genetic algorithm parameters
+simulation = Simulation(config)
 
-POPULATION_SIZE = 100
-MUTATION_PROBABILITY = .1
-CROSSOVER_RATE = .9
-MAX_RUNS = 100
+fitnessValues = simulation.runOneStep()
 
-# Simulation Parameters
-MAX_TIMESTEPS = 150
-LINE_SMOOTHNESS = .1
-MAX_GAIN_VALUE = 3
-
-# Control Variables
-# when set to 1, we create a new map this run. When set to 0, loads a new map
-NEW_MAP = 1
-# The number of runs we wait between showing a screenshot of the champion's run
-RUNS_PER_SCREENSHOT = 10
-
-#http://www.waset.org/journals/waset/v56/v56-89.pdf
-# Premature convergence problem.
-#
-
-"""
-    Main
-
-    1 [Start] Generate random population of n chromosomes (suitable solutions for the problem)
-    2 [Fitness] Evaluate the fitness f(x) of each chromosome x in the population
-    3 [New population] Create a new population by repeating following steps until the new population is complete
-        3a[Selection] Select two parent chromosomes from a population according to their fitness (the better fitness, the bigger chance to be selected)
-        3b[Crossover] With a crossover probability cross over the parents to form a new offspring (children). If no crossover was performed, offspring is an exact copy of parents.
-        3c[Mutation] With a mutation probability mutate new offspring at each locus (position in chromosome).
-        3d[Accepting] Place new offspring in a new population
-    4 [Replace] Use new generated population for a further run of algorithm
-    5 [Test] If the end condition is satisfied, stop, and return the best solution in current population
-    6 [Loop] Go to step 2
-"""
-
-# create map or load map based on mode
-if NEW_MAP == 1:
-    map = create_map()
-else:
-    map = load_map()
-
-# make a directory to store results
-try:
-    os.mkdir("results")
-except OSError:
-    pass
 
 population = generate_initial_population()
 fitness_values = run_simulation(map, population)
