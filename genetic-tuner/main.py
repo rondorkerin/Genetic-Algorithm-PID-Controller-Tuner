@@ -1,9 +1,9 @@
 import random
 import math
-import config
 import matplotlib.pyplot as plt
 import os
 from lib.simulation import Simulation
+from config import config
 
 if not os.path.exists(config['data_directory']):
     os.makedirs(config['data_directory'])

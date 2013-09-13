@@ -1,5 +1,7 @@
 from map import Map
 from algorithm import GeneticAlgorithm
+from chromosome import Chromosome
+import random
 
 """
     Main
@@ -18,8 +20,8 @@ from algorithm import GeneticAlgorithm
 class Simulation:
     def __init__(self, config):
         self.config = config
-        self.map = Map(config)
-        self.algorithm = GeneticAlgorithm()
+        self.map = Map(self.config)
+        self.algorithm = GeneticAlgorithm(self.config)
         self.generate_initial_population()
 
     def generate_initial_population(self):
@@ -29,16 +31,16 @@ class Simulation:
         """
         random.seed()
         self.population = []
-        for chromosome in range(config['population_size']):
+        for chromosome in range(self.config['population_size']):
             # create a random chromosome with a random gain value
-            self.population.append(Chromosome(random.random() * config['max_gain_value'], random.random() * MAX_GAIN_VALUE, random.random() * MAX_GAIN_VALUE))
+            self.population.append(Chromosome(random.random() * self.config['max_gain_value'], random.random() * self.config['max_gain_value'], random.random() * self.config['max_gain_value']))
 
     """
     3 [New population] Create a new population by repeating following steps until the new population is complete
     """
     def generate_new_population(self):
         new_population = []
-        for i in range(self.config['population_size']-1):
+        for i in range(self.self.config['population_size']-1):
             # selection
             parents = self.algorithm.selection(self.fitness_values)
 
@@ -53,7 +55,7 @@ class Simulation:
 
     def run_one_generation(self):
         self.fitness_values = []
-        for chromosome in range(config['population_size']):
+        for chromosome in range(self.config['population_size']):
             self.fitness_values.append(chromosome)
             self.fitness_values[chromosome] = run_simulation_for_chromosome(map, population, chromosome)
 
