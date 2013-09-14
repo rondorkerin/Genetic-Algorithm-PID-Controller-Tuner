@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import os
 from lib.simulation import Simulation
+from lib import listtools
 from config import config
 
 if not os.path.exists(config['data_directory']):
@@ -10,11 +11,9 @@ if not os.path.exists(config['data_directory']):
 
 simulation = Simulation(config)
 
-fitnessValues = simulation.runOneStep()
+simulation.generate_initial_population()
 
-
-population = generate_initial_population()
-fitness_values = run_simulation(map, population)
+#fitness_values = run_simulation(map, population)
 
 max_values = []
 avg_values = []
@@ -24,11 +23,11 @@ ki_values = []
 
 # perform simulation
 
-for i in range(MAX_RUNS):
+for i in range(config['max_runs']):
 
-    # generate population and run the simulation
-    population = generate_new_population(fitness_values, population)
-    fitness_values = run_simulation(map, population)
+    simulation.generate_new_population()
+    fitness_values = simulation.fitness_values
+    population = simulation.population
 
     # add the champion chromosome to a list of champions for plotting
     index_of_champion = listtools.max_index_in_list(fitness_values)
@@ -42,15 +41,11 @@ for i in range(MAX_RUNS):
     avg_values.append(listtools.avgList(fitness_values))
 
 
-    # every RUNS_PER_SCREENSHOT runs, do a plot of the champion chromosome
-    if i % RUNS_PER_SCREENSHOT == 0:
-        # run the simulation for the first selected parent
-        run_simulation_for_champion(map, population, index_of_champion, i, listtools.max_value_in_list(fitness_values))
-
     print "Run " + str(i) + ": max value " + str(max_values[i]) + ", avg value " + str(avg_values[i])
 
 
 # plot fitness results of each run
+"""
 
 plt.figure()
 plt.plot()
@@ -75,3 +70,4 @@ plt.legend(loc='center right')
 plt.xlabel("Run")
 plt.ylabel("Value")
 plt.savefig("results/champion_gain_values_per_run.png", format="png")
+"""

@@ -7,9 +7,9 @@ Overview
 Genetic-algorithm-pid-controller-tuner is an example of using a genetic algorithm to tune a PID controller.
 
 A PID controller is any controller that uses a combination of integral, proportional, and derivative parameters (I, P, D) to
-follow some target value. We integrate, derive, and multiply the distance from our target by certain constants. Call them (a, b, c)
+follow some target value. We integrate, derive, and multiply the distance from our target by certain constants. Call them (ki, kp kd)
 
-So our "velocity towards the target value" is the function f(x) = a*I(x) + b*P(x) + c*D(x) where "x" is the current distance
+So our "velocity towards the target value" is the function f(x) = ki*I(x) + kp*P(x) + kd*D(x) where "x" is the current distance
 from the target location.
 
 In our example, we have a robot following a theoretical line. The line randomly walks about the origin "0" at each timestep. We use
@@ -24,10 +24,11 @@ News
     - Map, which creates or loads a map over which the robot runs
     - Chromosome, which defines the chromosome (a, b, c), which are also known as (Ki, Kp, Kd)
     - Simulation, which contains methods for running the simulation.
-We will also be storing configuration parameters in the config.py file in the main directory.
-
-Stay tuned!
-
+09/14/2013 : I've completed the basic code refactoring and got the simulation running, without visuals. The next step is to abstract
+    out the controller a little more to increase the size of the data we can work with without getting numeric overflows (increasing the
+    simulation length creates numeric overflows during some arithmetic operations). Of course I also need to get the visual system hooked back
+    up and I'll probably create a library module for it. I'll probably stop working on this project until further notice because I have a lot
+    of other, more pertinent projects I'm working on and I don't see a huge future for this one.
 
 Possible Future Improvements
 ----------------------------

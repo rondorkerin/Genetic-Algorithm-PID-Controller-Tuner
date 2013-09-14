@@ -33,34 +33,38 @@ class Simulation:
         self.population = []
         for chromosome in range(self.config['population_size']):
             # create a random chromosome with a random gain value
-            self.population.append(Chromosome(random.random() * self.config['max_gain_value'], random.random() * self.config['max_gain_value'], random.random() * self.config['max_gain_value']))
+            self.population.append(Chromosome(
+                random.random() * self.config['max_gain_value'],
+                random.random() * self.config['max_gain_value'],
+                random.random() * self.config['max_gain_value']
+                ))
 
-    """
-    3 [New population] Create a new population by repeating following steps until the new population is complete
-    """
     def generate_new_population(self):
+        """
+        Generate a new population by repeating following steps until the new population is complete
+        """
         new_population = []
-        for i in range(self.self.config['population_size']-1):
-            # selection
-            parents = self.algorithm.selection(self.fitness_values)
+        self.fitness_values = []
 
-            # crossover
-            chromosome = self.algorithm.crossover(self.population, parents)
+        # find fitness values of the entire population
+        for chromosomeIndex in range(self.config['population_size']):
+            self.fitness_values.append(self.run_simulation_for_chromosome(chromosomeIndex))
+
+        # generate a new population based on fitness values
+        for chromosomeIndex in range(self.config['population_size']):
+            # selection - find two parents of new chromosome
+            parentIndices = self.algorithm.selection(self.fitness_values)
+
+            # crossover - generate a child based on
+            chromosome = self.algorithm.crossover(self.population[parentIndices[0]], self.population[parentIndices[1]])
 
             # mutation
             chromosome = self.algorithm.mutation(chromosome)
             new_population.append(chromosome)
 
-        return new_population
+        self.population = new_population
 
-    def run_one_generation(self):
-        self.fitness_values = []
-        for chromosome in range(self.config['population_size']):
-            self.fitness_values.append(chromosome)
-            self.fitness_values[chromosome] = run_simulation_for_chromosome(map, population, chromosome)
-
-
-    def run_simulation_for_chromosome(map, population, chromosome):
+    def run_simulation_for_chromosome(self, chromosomeIndex):
         """
         Run simulation for a specific chromosome c.
 
@@ -73,14 +77,17 @@ class Simulation:
         current_summation = 0
         current_distance = 0
 
-        for time in range(MAX_TIMESTEPS):
+        for time in range(self.config['max_timesteps']):
             distance_list.append(time)
-            current_distance = map[time] - current_position
+            current_distance = self.map.get(time) - current_position
 
-            #for integral controller
+            # note: God integrates empirically
             current_summation = current_summation + current_distance
 
-            new_velocity = population[chromosome].kp * current_distance + population[chromosome].kd * (current_distance-last_distance) + population[chromosome].ki * current_summation
+            new_velocity = (self.population[chromosomeIndex].kp * current_distance +
+                self.population[chromosomeIndex].kd * (current_distance-last_distance) +
+                self.population[chromosomeIndex].ki * current_summation
+                )
             #x = x + dx/dt * dt (dt = 1)
 
             current_position = current_position + new_velocity

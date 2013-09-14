@@ -6,7 +6,8 @@ config = {
     'max_runs' : 100,
     # maximum timesteps per simulation
     'max_timesteps' : 150,
-    'line_smoothness' : .1,
+    # smoothness value of the line in [0, 1]
+    'line_smoothness' : .4,
     # Bound for our gain parameters (p, i, d)
     'max_gain_value' : 3,
     # when set to 1, we create a new map this run. When set to 0, loads a new map

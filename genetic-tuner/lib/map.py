@@ -48,4 +48,7 @@ class Map:
 
         self.map = map
 
+    def get(self, index):
+        return self.map[index]
+
 
