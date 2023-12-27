@@ -1,187 +1,89 @@
-# Reference:
-# http://code.activestate.com/recipes/278258/
+from functools import reduce
+import random
 
-def sumList(L):
-    return reduce(lambda x,y:x+y, L)
+def sum_list(L):
+    return reduce(lambda x, y: x + y, L)
 
-def avgList(L):
-    return reduce(lambda x,y:x+y, L) /(len(L)*1.0)
+def avg_list(L):
+    return sum_list(L) / (len(L) * 1.0)
 
-def normList(L, normalizeTo=1):
-    '''normalize values of a list to make its max = normalizeTo'''
+def norm_list(L, normalize_to=1):
+    v_max = max(L)
+    return [x / (v_max * 1.0) * normalize_to for x in L]
 
-    vMax = max(L)
-    return [ x/(vMax*1.0)*normalizeTo for x in L]
+def norm_list_sum_to(L, sum_to=1):
+    _sum = sum_list(L)
+    return [x / (_sum * 1.0) * sum_to for x in L]
 
-def normListSumTo(L, sumTo=1):
-    '''normalize values of a list to make it sum = sumTo'''
+def accum_list(L, normalize_to=None):
+    new_list = [L[0]]
+    for i in range(1, len(L)):
+        new_list.append(new_list[-1] + L[i])
 
-    sum = reduce(lambda x,y:x+y, L)
-    return [ x/(sum*1.0)*sumTo for x in L]
+    if normalize_to:
+        new_list = norm_list_sum_to(new_list, sum_to=normalize_to)
 
-def accumList(L, normalizeTo=None):
-    ''' L= [1, 2, 3,  4,  5]:        accumList(L)=> [1, 3, 6, 10, 15]
-        L= [0.25, 0.25, 0.25, 0.25]: accumList(L)=> [0.25, 0.50, 0.75, 1.00]
-        normalizeTo: set the last number of the returned list to this value
-    '''
+    return new_list
 
-    if normalizeTo: LL = normListSumTo(L, sumTo=normalizeTo)
-    else: LL = L[:]
+def find_index(sorted_list, x, index_buffer=0):
+    if len(sorted_list) == 2:
+        if x == sorted_list[-1]:
+            return index_buffer + 2
+        elif x >= sorted_list[0]:
+            return index_buffer + 1
 
-    r = range(1, len(LL))
-    newList=[LL[0]]
-    for i in r:
-        newList.append( newList[-1]+ LL[i] )
-    return newList
-
-def findIndex(sortedList, x, indexBuffer=0):
-  ''' Given a sortedList and value x, return the index i where
-      sortedList[i-1] <= x < sortedList[i]
-
-      Which means,
-        sortedList.insert( findIndex(sortedList, x), x )
-      will give a sorted list
-  '''
-
-  if len(sortedList)==2:
-
-    if x==sortedList[-1]:   return indexBuffer+2
-    elif x>=sortedList[0]:  return indexBuffer+1
-
-  else:
-    L = len(sortedList)
-    firstHalf  = sortedList[:L/2+1]
-    secondHalf = sortedList[(L/2):]
-
-    if secondHalf[-1]<=x:
-      return indexBuffer + len(sortedList)
-    elif x< firstHalf[0]:
-      return indexBuffer
     else:
-      if firstHalf[-1] < x:
-        return findIndex(secondHalf, x, indexBuffer=L/2+indexBuffer)
-      else:
-        return findIndex(firstHalf,x, indexBuffer=indexBuffer)
+        L = len(sorted_list)
+        first_half = sorted_list[:L//2 + 1]
+        second_half = sorted_list[L//2:]
 
-def randomPickList(L):
-    ''' given a list L, with all values are numbers,
-        randomly pick an item and return it's index according
-        to the percentage of all values'''
+        if second_half[-1] <= x:
+            return index_buffer + len(sorted_list)
+        elif x < first_half[0]:
+            return index_buffer
+        else:
+            if first_half[-1] < x:
+                return find_index(second_half, x, index_buffer=L//2 + index_buffer)
+            else:
+                return find_index(first_half, x, index_buffer=index_buffer)
 
-    return findIndex(accumList(L,1), random.random())
+def random_pick_list(L):
+    return find_index(accum_list(L, 1), random.random())
 
-def deepList(LString):
-    '''
-    Given string representation of a nested list tree,
-    return a list containing all the deepest list contents.
-
-    For example:
-
-    '[[1,[2, 2a]],[[3,3b],4]]'
-    ==> ['2, 2a', '3,3b']
-
-    '[[[1,[2, 2a]],[[3,3b],4]],6]'
-    ==> ['2, 2a', '3,3b']
-
-    '[[[[a1,a2],out],o1],[o2,o3]]'
-    ==> ['a1,a2', 'o2,o3']
-
-    '[[[[[a1,a2], out], [o1,o2]],[o3,o4]],[o5,o6]]'
-    ==> ['a1,a2', 'o1,o2', 'o3,o4', 'o5,o6']
-
-    The code: [x.split(']') for x in code.split('[')]
-    returns something like:
-    [[''], [''], [''], [''], [''], ['a1,a2', ', out', ', '],
-    ['o1,o2', '', ','], ['o3,o4', '', ','], ['o5,o6', '', '']]
-
-    '''
-    result= [x[0] for x in \
-            [x.split(']') for x in LString.split('[')] \
-            if len(x)>1]
-    if result==['']: result =[]
+def deep_list(L_string):
+    result = [x[0] for x in [x.split(']') for x in L_string.split('[') if len(x) > 1]]
+    if result == ['']:
+        result = []
     return result
 
+def get_list_startswith(a_list, starts_with, is_strip=1):
+    tmp = a_list[:]
+    if is_strip:
+        tmp = [x.strip() for x in tmp]
 
-def getListStartsWith(aList, startsWith, isStrip=1):
-    ''' for a list:   L= ['abcdef', 'kkddff', 'xyz', '0wer'...],
-
-        getListStartWith(L, 'kk') will return:
-           ['kkddff', 'xyz', '0wer'...],
-
-        getListStartWith(L, 'xy') will return:
-           ['xyz', '0wer'...],
-
-        if isStrip: any item '  xyz' will be considered 'xyz'
-        else:       the spaces in '  xyz' count.
-
-    '''
-    tmp = aList[:]
-    if isStrip: tmp = [x.strip() for x in tmp]
-    startLineIndex = 0
+    start_line_index = 0
     for i in range(len(tmp)):
-        if tmp[i].startswith(startsWith):
-            startLineIndex = i
-    return aList[startLineIndex:]
+        if tmp[i].startswith(starts_with):
+            start_line_index = i
 
-def rezip(aList):
-    ''' d = [[1, 5, 8, 3], [2, 2, 3, 9], [3, 2, 4, 6]]
-        rezip(d):
-        [(1, 2, 3), (5, 2, 2), (8, 3, 4), (3, 9, 6)]
+    return a_list[start_line_index:]
 
-    If a =[1, 5, 8], b=[2, 2, 3], c=[3, 2, 4]
-    then it's eazy to: zip(a,b,c) = [(1, 2, 3), (5, 2, 2), (8, 3, 4)]
+def rezip(a_list):
+    return list(map(list, zip(*a_list)))
 
-    But it's hard for d = [[1, 5, 8], [2, 2, 3], [3, 2, 4]]
-    '''
+def sum_in_list(complex_list):
+    d = rezip(complex_list)
+    return [sum_list(z) for z in d]
 
-    tmp = [ [] for x in range(len(aList[0])) ]
-    for i in range(len(aList[0])):
-        for j in range(len(aList)):
-            tmp[i].append(aList[j][i])
-    return tmp
+def avg_in_list(complex_list):
+    d = rezip(complex_list)
+    return [avg_list(z) for z in d]
 
-def sumInList(complexList):
-  ''' Given a complexList [ [a1,b1,c1], [a2,b2,c2], [a3,b3,c3] ],
-      return a list [ a, b, c] where a = a1+a2+a3, etc.'''
-  d = rezip(complexList)
-  return [ reduce(lambda x,y:x+y, z) for z in d ]
+def max_value_in_list(lst):
+    return max(lst, default=None)
 
-def avgInList(complexList):
-  ''' Given a complexList [ [a1,b1,c1], [a2,b2,c2], [a3,b3,c3] ],
-      return a list [ a, b, c] where a = avg of a1, a2, a3, etc.'''
-  d = rezip(complexList)
-  return [ reduce(lambda x,y:x+y, z)/(len(z)*1.0) for z in d ]
+def max_index_in_list(lst):
+    return lst.index(max_value_in_list(lst))
 
-## requires positive values (0 counts)
-def max_value_in_list(list):
-        max_index = 0
-        max_value = -1
-
-        for i in range(len(list)):
-                if list[i] > max_value:
-                        max_value = list[i]
-                        max_index = i
-
-        return max_value
-
-def max_index_in_list(list):
-        max_index = 0
-        max_value = -1
-
-        for i in range(len(list)):
-                if list[i] > max_value:
-                        max_value = list[i]
-                        max_index = i
-
-        return max_index
-
-def min_value_in_list(list):
-        min_index = 0
-        min_value = 99999999
-
-        for i in range(len(list)):
-                if list[i] < min_value:
-                        min_value = list[i]
-
-        return min_value
-
+def min_value_in_list(lst):
+    return min(lst, default=None)
